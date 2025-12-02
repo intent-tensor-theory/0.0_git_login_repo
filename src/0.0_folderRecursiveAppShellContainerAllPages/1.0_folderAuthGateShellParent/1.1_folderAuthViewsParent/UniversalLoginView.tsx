@@ -146,6 +146,21 @@ export const UniversalLoginView: React.FC = () => {
   const allowSignUp = AUTH_CONFIG.options.allowSignUp;
   
   // ─────────────────────────────────────────────────────────────────────────────
+  // PROVIDER TIERS: Enterprise (top) vs Social (bottom)
+  // ─────────────────────────────────────────────────────────────────────────────
+  
+  // Enterprise SSO providers (formal/business tier) - order: Google, Apple, Microsoft
+  const ENTERPRISE_ORDER: OAuthProvider[] = ['google', 'apple', 'microsoft'];
+  const enterpriseProviders = ENTERPRISE_ORDER.filter(p => enabledOAuthProviders.includes(p));
+  
+  // Social/Dev providers (casual tier) - order: LinkedIn, GitHub, Twitter, Discord (formal → casual)
+  const SOCIAL_ORDER: OAuthProvider[] = ['linkedin', 'github', 'twitter', 'discord'];
+  const socialProviders = SOCIAL_ORDER.filter(p => enabledOAuthProviders.includes(p));
+  
+  const hasEnterprise = enterpriseProviders.length > 0;
+  const hasSocial = socialProviders.length > 0;
+  
+  // ─────────────────────────────────────────────────────────────────────────────
   // HANDLERS
   // ─────────────────────────────────────────────────────────────────────────────
   
@@ -255,6 +270,30 @@ export const UniversalLoginView: React.FC = () => {
       
       {/* Main Card with Tabs */}
       <div style={styles.card}>
+        
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* TOP TAB ROW — Enterprise SSO (Google, Apple, Microsoft) */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {hasEnterprise && (viewMode === 'login' || viewMode === 'signup') && (
+          <div style={styles.tabRow}>
+            {enterpriseProviders.map((provider) => {
+              const IconComponent = OAUTH_ICON_MAP[provider];
+              return (
+                <button
+                  key={provider}
+                  onClick={() => handleOAuthClick(provider)}
+                  disabled={isLoading}
+                  style={styles.tabButton}
+                  className="oauth-tab"
+                  title={`Continue with ${OAUTH_NAMES[provider]}`}
+                  aria-label={`Continue with ${OAUTH_NAMES[provider]}`}
+                >
+                  <IconComponent size={24} />
+                </button>
+              );
+            })}
+          </div>
+        )}
         
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* MAIN CONTENT AREA */}
@@ -478,11 +517,11 @@ export const UniversalLoginView: React.FC = () => {
         </div>
         
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* BOTTOM TAB ROW — Social OAuth Methods */}
+        {/* BOTTOM TAB ROW — Social/Dev OAuth (LinkedIn, GitHub, X, Discord) */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {hasOAuth && (viewMode === 'login' || viewMode === 'signup') && (
+        {hasSocial && (viewMode === 'login' || viewMode === 'signup') && (
           <div style={styles.tabRow}>
-            {enabledOAuthProviders.map((provider) => {
+            {socialProviders.map((provider) => {
               const IconComponent = OAUTH_ICON_MAP[provider];
               return (
                 <button
