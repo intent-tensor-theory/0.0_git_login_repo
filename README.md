@@ -1,4 +1,4 @@
-# ◆ Diamond Empire — Git Login Repo
+# ◆ Diamond Empire — Universal Login
 
 ```
 ██████╗ ██╗ █████╗ ███╗   ███╗ ██████╗ ███╗   ██╗██████╗ 
@@ -7,10 +7,106 @@
 ██║  ██║██║██╔══██║██║╚██╔╝██║██║   ██║██║╚██╗██║██║  ██║
 ██████╔╝██║██║  ██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║██████╔╝
 ╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═════╝ 
-                    E M P I R E
+              UNIVERSAL LOGIN
 ```
 
-**A complete, production-grade, ghostless, intent-pure authentication system built from first principles using Intent Tensor Theory and the ICHTB Coordinate System.**
+## 🌟 The Last Login You'll Ever Need to Clone
+
+**A provider-agnostic, production-grade authentication template.**  
+One config file. Multiple providers. Zero secrets committed.
+
+Clone → Configure → Deploy → Done.
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/intent-tensor-theory/0.0_git_login_repo.git
+cd 0.0_git_login_repo
+
+# 2. Install dependencies
+npm install
+
+# 3. Edit ONE file: src/auth.config.ts
+#    - Choose your provider (Firebase, Supabase, Auth0, Cognito, Clerk)
+#    - Paste your credentials
+#    - Enable OAuth methods (Google, GitHub, Apple, etc.)
+
+# 4. Run it
+npm run dev
+```
+
+That's it. The entire system routes from that one file.
+
+---
+
+## 🔌 Supported Providers
+
+| Provider | Status | OAuth Support |
+|----------|--------|---------------|
+| **Firebase** | ✅ Ready | Google, GitHub, Apple, Microsoft, Twitter |
+| **Supabase** | ✅ Ready | Google, GitHub, Apple, Discord, Twitter |
+| **Auth0** | ✅ Ready | All major providers |
+| **AWS Cognito** | 🔧 Coming | Google, Apple, Facebook |
+| **Clerk** | 🔧 Coming | All major providers |
+
+## 🔐 Supported OAuth Methods
+
+All providers normalize to the same icons and flow:
+
+| Method | Icon | Status |
+|--------|------|--------|
+| Google | ✅ | Ready |
+| GitHub | ✅ | Ready |
+| Apple | ✅ | Ready |
+| Microsoft | ✅ | Ready |
+| Twitter/X | ✅ | Ready |
+| Discord | ✅ | Ready |
+| LinkedIn | ✅ | Ready |
+
+---
+
+## 📁 The One File You Edit
+
+```typescript
+// src/auth.config.ts
+
+export const AUTH_CONFIG = {
+  // Step 1: Choose provider
+  provider: 'firebase',  // or 'supabase' | 'auth0' | 'cognito' | 'clerk'
+  
+  // Step 2: Paste credentials (only for your chosen provider)
+  credentials: {
+    firebase: {
+      apiKey: 'YOUR-FIREBASE-API-KEY-HERE',
+      authDomain: 'YOUR-PROJECT-ID.firebaseapp.com',
+      projectId: 'YOUR-PROJECT-ID-HERE',
+      // ... etc
+    },
+    supabase: { url: '', anonKey: '' },  // Leave empty if not using
+    auth0: { domain: '', clientId: '' }, // Leave empty if not using
+  },
+  
+  // Step 3: Enable auth methods (icons appear automatically)
+  methods: {
+    emailPassword: true,
+    google: true,
+    github: false,
+    apple: false,
+    // ... etc
+  },
+};
+```
+
+**Icons appear automatically** for enabled methods.  
+**Disabled methods** don't show up.  
+**No dead icons.** Ever.
+
+---
+
+## 🏗️ Architecture
 
 ---
 
