@@ -16,6 +16,8 @@
 
 *The login screen above is brandless — it's YOUR app's login.*  
 *This repo is where Diamond Empire lives.*
+---
+<img width="570" height="746" alt="image" src="https://github.com/user-attachments/assets/fb86427a-88d2-412d-832b-22bf8f4f63a5" />
 
 ---
 
