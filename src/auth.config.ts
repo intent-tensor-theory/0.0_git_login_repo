@@ -202,7 +202,7 @@ export const AUTH_CONFIG: AuthConfig = {
     allowSignUp: true,                 // Allow new user registration
     redirectAfterLogin: '/dashboard',  // Where to go after login
     redirectAfterLogout: '/login',     // Where to go after logout
-    appName: 'Diamond Empire',         // Your app name
+    appName: 'App Login',              // Your app name (change this!)
     appLogo: undefined,                // Optional: URL to your logo
   },
 };

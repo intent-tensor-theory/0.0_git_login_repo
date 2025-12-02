@@ -20,8 +20,7 @@ import {
   MicrosoftIcon, 
   TwitterIcon, 
   DiscordIcon, 
-  LinkedInIcon,
-  EmailIcon
+  LinkedInIcon
 } from './oauth-icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -256,21 +255,6 @@ export const UniversalLoginView: React.FC = () => {
       
       {/* Main Card with Tabs */}
       <div style={styles.card}>
-        
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* TOP TAB ROW — Email Methods */}
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {hasEmailPassword && (viewMode === 'login' || viewMode === 'signup' || viewMode === 'forgot-password') && (
-          <div style={styles.tabRow}>
-            <button
-              style={styles.tabButton}
-              title="Sign in with Email"
-              aria-label="Sign in with Email"
-            >
-              <EmailIcon size={24} />
-            </button>
-          </div>
-        )}
         
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* MAIN CONTENT AREA */}
@@ -519,9 +503,9 @@ export const UniversalLoginView: React.FC = () => {
         
       </div>
       
-      {/* Diamond Standard Badge */}
-      <div style={styles.badge}>
-        <span style={styles.badgeText}>◆ Diamond Standard</span>
+      {/* Subtle Attribution — visible but not intrusive */}
+      <div style={styles.attribution}>
+        <span style={styles.attributionText}>◆</span>
       </div>
       
       {/* CSS for hover animations */}
@@ -707,20 +691,18 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'underline',
     padding: 0,
   },
-  badge: {
+  attribution: {
     position: 'fixed',
-    bottom: '1rem',
-    right: '1rem',
-    background: 'rgba(0, 255, 136, 0.1)',
-    border: '1px solid rgba(0, 255, 136, 0.3)',
-    borderRadius: '20px',
-    padding: '0.5rem 1rem',
+    bottom: '0.75rem',
+    right: '0.75rem',
     zIndex: 100,
   },
-  badgeText: {
-    color: '#00ff88',
-    fontSize: '0.75rem',
-    fontWeight: 600,
+  attributionText: {
+    color: 'rgba(255, 255, 255, 0.15)',
+    fontSize: '1rem',
+    fontWeight: 400,
+    cursor: 'default',
+    userSelect: 'none',
   },
   // ═══════════════════════════════════════════════════════════════════════════
   // VERIFY EMAIL & RESET SENT SCREEN STYLES

@@ -10,6 +10,15 @@
               UNIVERSAL LOGIN
 ```
 
+## 🔴 Live Demo
+
+**👉 [https://diamond-universal-login.onrender.com](https://diamond-universal-login.onrender.com)**
+
+*The login screen above is brandless — it's YOUR app's login.*  
+*This repo is where Diamond Empire lives.*
+
+---
+
 ## 🌟 The Last Login You'll Ever Need to Clone
 
 **A provider-agnostic, production-grade authentication template.**  
