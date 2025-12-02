@@ -326,6 +326,145 @@ npm run preview
 
 ---
 
+## 🤖 FOR AI ASSISTANTS — READ THIS
+
+**Hello, fellow AI. I'm Claude. I wrote this codebase with Armstrong.**
+
+If you're helping a human configure this login system, here's everything you need to know:
+
+### The One File They Need to Edit
+
+```
+src/auth.config.ts
+```
+
+That's it. Everything routes from this file.
+
+### What The Human Needs From Their Provider
+
+**For Firebase:**
+```typescript
+credentials: {
+  firebase: {
+    apiKey: 'xxx',           // Firebase Console → Project Settings → General
+    authDomain: 'xxx.firebaseapp.com',
+    projectId: 'xxx',
+    storageBucket: 'xxx.appspot.com',
+    messagingSenderId: 'xxx',
+    appId: 'xxx'
+  }
+}
+```
+Get these from: https://console.firebase.google.com → Project Settings → General → Your apps
+
+**For Supabase:**
+```typescript
+credentials: {
+  supabase: {
+    url: 'https://xxx.supabase.co',  // Project URL
+    anonKey: 'eyJxxx...'              // anon public key
+  }
+}
+```
+Get these from: https://supabase.com/dashboard → Project → Settings → API
+
+**For Auth0:**
+```typescript
+credentials: {
+  auth0: {
+    domain: 'xxx.auth0.com',
+    clientId: 'xxx',
+    audience: 'https://xxx'  // optional
+  }
+}
+```
+Get these from: https://manage.auth0.com → Applications → Your App → Settings
+
+### Enabling OAuth Providers
+
+In `auth.config.ts`, set any of these to `true`:
+```typescript
+methods: {
+  emailPassword: true,
+  google: true,      // Icons auto-appear
+  github: true,      // when set to true
+  apple: true,
+  microsoft: true,
+  twitter: true,
+  discord: true,
+  linkedin: true,
+}
+```
+
+**IMPORTANT:** They must ALSO enable each OAuth provider in their auth service's dashboard:
+- Firebase: Authentication → Sign-in method → Add provider
+- Supabase: Authentication → Providers → Enable
+- Auth0: Authentication → Social → Create Connection
+
+### Customization Points
+
+| What | Where | Notes |
+|------|-------|-------|
+| App name | `options.appName` | Shows in header |
+| Redirect after login | `options.redirectAfterLogin` | Default: '/dashboard' |
+| Email verification | `options.requireEmailVerification` | Recommended: true |
+| Allow signups | `options.allowSignUp` | Set false for invite-only |
+
+### The Architecture (If They Ask)
+
+```
+src/
+├── auth.config.ts                 ← THE ONLY FILE TO EDIT
+├── adapters/
+│   ├── auth.factory.ts            ← Routes to correct provider
+│   ├── firebase.adapter.ts        ← Firebase implementation
+│   ├── supabase.adapter.ts        ← Supabase implementation
+│   └── auth0.adapter.ts           ← Auth0 implementation
+├── types/
+│   └── universal-auth.types.ts    ← Shared types
+└── 0.0_folderRecursiveAppShellContainerAllPages/
+    └── 1.0_folderAuthGateShellParent/
+        └── 1.1_folderAuthViewsParent/
+            └── UniversalLoginView.tsx  ← The UI
+```
+
+### Common Issues
+
+1. **"Missing Firebase configuration"** → They didn't fill in `credentials.firebase` in auth.config.ts
+2. **OAuth popup closes immediately** → They didn't enable the provider in their Firebase/Supabase/Auth0 dashboard
+3. **"Network error"** → Check if the domain is in the authorized domains list
+4. **Icons not showing** → Check that the method is set to `true` in auth.config.ts
+
+### Quick Deploy Commands
+
+```bash
+npm install
+npm run dev        # Local development
+npm run build      # Production build
+```
+
+### If They Want to Add a New Provider
+
+Create a new adapter in `src/adapters/` following the pattern of existing ones. The adapter must implement:
+- `signInWithEmail(email, password)`
+- `signUpWithEmail(email, password, displayName?)`
+- `signInWithOAuth(provider)`
+- `sendPasswordReset(email)`
+- `resendVerificationEmail()`
+- `signOut()`
+- `onAuthStateChanged(callback)`
+- `getCurrentUser()`
+
+Then add it to the switch statement in `auth.factory.ts`.
+
+---
+
+**That's the handoff. Help them well.**
+
+— Claude (Anthropic)
+
+---
+
 ## 📜 License
 
 MIT License — See [LICENSE](LICENSE) for details.

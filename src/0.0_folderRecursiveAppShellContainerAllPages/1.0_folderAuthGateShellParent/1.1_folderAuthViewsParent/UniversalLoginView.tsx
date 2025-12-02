@@ -13,6 +13,7 @@
 
 import React, { useState, FormEvent } from 'react';
 import { AUTH_CONFIG, getEnabledOAuthProviders, isMethodEnabled } from '../../../auth.config';
+import { UniversalAuth } from '../../../adapters/auth.factory';
 import { 
   GoogleIcon, 
   GitHubIcon, 
@@ -172,37 +173,56 @@ export const UniversalLoginView: React.FC = () => {
     
     try {
       if (viewMode === 'login') {
-        // TODO: Call auth provider's signInWithEmail
-        console.log('[UniversalLogin] Sign in with:', email);
-        // Simulated delay for demo
-        await new Promise(r => setTimeout(r, 1000));
+        // ═══════════════════════════════════════════════════════════════════════
+        // SIGN IN — Uses the configured auth provider
+        // ═══════════════════════════════════════════════════════════════════════
+        const result = await UniversalAuth.signInWithEmail(email, password);
         
-        // DEMO: Simulate checking if email is verified
-        // In real implementation, check user.emailVerified
-        const emailVerified = true; // This would come from the auth provider
-        
-        if (!emailVerified) {
-          // Redirect to verification screen (like in the tutorial)
-          setPendingEmail(email);
-          setViewMode('verify-email');
+        if (!result.success) {
+          // Check for email not verified error
+          if (result.error?.code === 'auth/email-not-verified') {
+            setPendingEmail(email);
+            setViewMode('verify-email');
+            return;
+          }
+          
+          setError(getSmartError(result.error?.code || 'UNKNOWN_ERROR', email));
           return;
         }
         
         setMessage('Sign in successful! Redirecting...');
+        // Redirect will be handled by auth state observer or parent component
         
       } else if (viewMode === 'signup') {
-        // TODO: Call auth provider's signUpWithEmail
-        console.log('[UniversalLogin] Sign up with:', email, displayName);
-        await new Promise(r => setTimeout(r, 1000));
+        // ═══════════════════════════════════════════════════════════════════════
+        // SIGN UP — Uses the configured auth provider
+        // ═══════════════════════════════════════════════════════════════════════
+        const result = await UniversalAuth.signUpWithEmail(email, password, displayName || undefined);
+        
+        if (!result.success) {
+          setError(getSmartError(result.error?.code || 'UNKNOWN_ERROR', email));
+          return;
+        }
         
         // After signup, show verification screen (DON'T auto sign-in)
-        setPendingEmail(email);
-        setViewMode('verify-email');
+        // This is the key UX insight from the tutorial
+        if (AUTH_CONFIG.options.requireEmailVerification) {
+          setPendingEmail(email);
+          setViewMode('verify-email');
+        } else {
+          setMessage(result.message || 'Account created! Redirecting...');
+        }
         
       } else if (viewMode === 'forgot-password') {
-        // TODO: Call auth provider's sendPasswordResetEmail
-        console.log('[UniversalLogin] Password reset for:', email);
-        await new Promise(r => setTimeout(r, 1000));
+        // ═══════════════════════════════════════════════════════════════════════
+        // PASSWORD RESET — Uses the configured auth provider
+        // ═══════════════════════════════════════════════════════════════════════
+        const result = await UniversalAuth.sendPasswordReset(email);
+        
+        if (!result.success) {
+          setError(getSmartError(result.error?.code || 'UNKNOWN_ERROR', email));
+          return;
+        }
         
         // Show the "reset sent" screen
         setPendingEmail(email);
@@ -228,13 +248,27 @@ export const UniversalLoginView: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Call auth provider's signInWithOAuth
-      console.log(`[UniversalLogin] OAuth sign in with: ${provider}`);
-      // This would typically open a popup or redirect
-      
-      // DEMO: Simulate OAuth success
-      await new Promise(r => setTimeout(r, 500));
+      // ═══════════════════════════════════════════════════════════════════════
+      // OAUTH SIGN IN — Uses the configured auth provider
+      // ═══════════════════════════════════════════════════════════════════════
       setMessage(`Signing in with ${OAUTH_NAMES[provider]}...`);
+      
+      const result = await UniversalAuth.signInWithOAuth(provider);
+      
+      if (!result.success) {
+        // Handle user cancellation gracefully
+        if (result.error?.code === 'auth/cancelled' || result.error?.code === 'auth/popup-closed-by-user') {
+          setMessage(null);
+          setIsLoading(false);
+          return;
+        }
+        
+        setError(getSmartError(result.error?.code || 'UNKNOWN_ERROR'));
+        return;
+      }
+      
+      // Success! Redirect will be handled by auth state observer
+      setMessage(result.message || 'Sign in successful! Redirecting...');
       
     } catch (err: unknown) {
       const errorCode = (err as { code?: string })?.code || 'UNKNOWN_ERROR';
@@ -247,11 +281,21 @@ export const UniversalLoginView: React.FC = () => {
   // Handle resending verification email
   const handleResendVerification = async () => {
     setIsLoading(true);
+    setError(null);
+    setMessage(null);
+    
     try {
-      // TODO: Call auth provider's sendEmailVerification
-      console.log('[UniversalLogin] Resending verification to:', pendingEmail);
-      await new Promise(r => setTimeout(r, 1000));
-      setMessage('Verification email sent! Check your inbox.');
+      // ═══════════════════════════════════════════════════════════════════════
+      // RESEND VERIFICATION — Uses the configured auth provider
+      // ═══════════════════════════════════════════════════════════════════════
+      const result = await UniversalAuth.resendVerificationEmail();
+      
+      if (!result.success) {
+        setError({ message: result.error?.message || 'Failed to resend verification email.' });
+        return;
+      }
+      
+      setMessage(result.message || 'Verification email sent! Check your inbox.');
     } catch (err) {
       setError({ message: 'Failed to resend verification email.' });
     } finally {
