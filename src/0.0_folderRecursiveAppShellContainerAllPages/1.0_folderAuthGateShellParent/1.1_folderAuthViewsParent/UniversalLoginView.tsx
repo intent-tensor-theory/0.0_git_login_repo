@@ -48,7 +48,7 @@ type SmartError = {
  * - User not found → "No account found. Create one?"
  * - Email not verified → Redirect to verify screen
  */
-const getSmartError = (errorCode: string, email?: string): SmartError => {
+const getSmartError = (errorCode: string, _email?: string): SmartError => {
   const errorMap: Record<string, SmartError> = {
     // Firebase error codes
     'auth/invalid-email': { message: 'Please enter a valid email address.' },
