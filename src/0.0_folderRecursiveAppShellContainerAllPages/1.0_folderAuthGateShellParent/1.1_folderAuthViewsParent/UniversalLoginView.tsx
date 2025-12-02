@@ -27,9 +27,80 @@ import {
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ViewMode = 'login' | 'signup' | 'forgot-password';
+type ViewMode = 'login' | 'signup' | 'forgot-password' | 'verify-email' | 'reset-sent';
 
 type OAuthProvider = 'google' | 'github' | 'apple' | 'microsoft' | 'twitter' | 'discord' | 'linkedin';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMART ERROR MESSAGES (The Gates from the tutorial)
+// ─────────────────────────────────────────────────────────────────────────────
+
+type SmartError = {
+  message: string;
+  action?: { label: string; viewMode: ViewMode };
+};
+
+/**
+ * Map provider error codes to user-friendly messages with smart actions
+ * This handles ALL the gates from the tutorial:
+ * - Wrong email/password → "Email or password incorrect"
+ * - User already exists → "User already exists. Sign in instead?"
+ * - User not found → "No account found. Create one?"
+ * - Email not verified → Redirect to verify screen
+ */
+const getSmartError = (errorCode: string, email?: string): SmartError => {
+  const errorMap: Record<string, SmartError> = {
+    // Firebase error codes
+    'auth/invalid-email': { message: 'Please enter a valid email address.' },
+    'auth/user-disabled': { message: 'This account has been disabled.' },
+    'auth/user-not-found': { 
+      message: 'No account found with this email.', 
+      action: { label: 'Create account?', viewMode: 'signup' } 
+    },
+    'auth/wrong-password': { message: 'Email or password incorrect.' },
+    'auth/invalid-credential': { message: 'Email or password incorrect.' },
+    'auth/email-already-in-use': { 
+      message: 'An account with this email already exists.', 
+      action: { label: 'Sign in instead?', viewMode: 'login' } 
+    },
+    'auth/weak-password': { message: 'Password must be at least 6 characters.' },
+    'auth/too-many-requests': { message: 'Too many attempts. Please wait and try again.' },
+    'auth/network-request-failed': { message: 'Network error. Please check your connection.' },
+    'auth/popup-closed-by-user': { message: 'Sign-in popup was closed. Please try again.' },
+    'auth/operation-not-allowed': { message: 'This sign-in method is not enabled.' },
+    
+    // Supabase error codes
+    'invalid_credentials': { message: 'Email or password incorrect.' },
+    'user_already_exists': { 
+      message: 'An account with this email already exists.', 
+      action: { label: 'Sign in instead?', viewMode: 'login' } 
+    },
+    'email_not_confirmed': { message: 'Please verify your email before signing in.' },
+    
+    // Auth0 error codes
+    'invalid_user_password': { message: 'Email or password incorrect.' },
+    'user_exists': { 
+      message: 'An account with this email already exists.', 
+      action: { label: 'Sign in instead?', viewMode: 'login' } 
+    },
+    
+    // Generic fallbacks
+    'INVALID_EMAIL': { message: 'Please enter a valid email address.' },
+    'INVALID_PASSWORD': { message: 'Email or password incorrect.' },
+    'USER_NOT_FOUND': { 
+      message: 'No account found with this email.', 
+      action: { label: 'Create account?', viewMode: 'signup' } 
+    },
+    'EMAIL_ALREADY_IN_USE': { 
+      message: 'An account with this email already exists.', 
+      action: { label: 'Sign in instead?', viewMode: 'login' } 
+    },
+    'WEAK_PASSWORD': { message: 'Password must be at least 6 characters.' },
+    'EMAIL_NOT_VERIFIED': { message: 'Please verify your email first.' },
+  };
+  
+  return errorMap[errorCode] || { message: 'An error occurred. Please try again.' };
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ICON MAPPING
@@ -65,8 +136,9 @@ export const UniversalLoginView: React.FC = () => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SmartError | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string>(''); // For verification screen
   
   const enabledOAuthProviders = getEnabledOAuthProviders() as OAuthProvider[];
   const hasOAuth = enabledOAuthProviders.length > 0;
@@ -80,6 +152,7 @@ export const UniversalLoginView: React.FC = () => {
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setIsLoading(true);
     
     try {
@@ -88,20 +161,47 @@ export const UniversalLoginView: React.FC = () => {
         console.log('[UniversalLogin] Sign in with:', email);
         // Simulated delay for demo
         await new Promise(r => setTimeout(r, 1000));
+        
+        // DEMO: Simulate checking if email is verified
+        // In real implementation, check user.emailVerified
+        const emailVerified = true; // This would come from the auth provider
+        
+        if (!emailVerified) {
+          // Redirect to verification screen (like in the tutorial)
+          setPendingEmail(email);
+          setViewMode('verify-email');
+          return;
+        }
+        
         setMessage('Sign in successful! Redirecting...');
+        
       } else if (viewMode === 'signup') {
         // TODO: Call auth provider's signUpWithEmail
         console.log('[UniversalLogin] Sign up with:', email, displayName);
         await new Promise(r => setTimeout(r, 1000));
-        setMessage('Account created! Please check your email to verify.');
+        
+        // After signup, show verification screen (DON'T auto sign-in)
+        setPendingEmail(email);
+        setViewMode('verify-email');
+        
       } else if (viewMode === 'forgot-password') {
         // TODO: Call auth provider's sendPasswordResetEmail
         console.log('[UniversalLogin] Password reset for:', email);
         await new Promise(r => setTimeout(r, 1000));
-        setMessage('Password reset email sent! Check your inbox.');
+        
+        // Show the "reset sent" screen
+        setPendingEmail(email);
+        setViewMode('reset-sent');
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: unknown) {
+      // Extract error code from various provider formats
+      const errorCode = 
+        (err as { code?: string })?.code || 
+        (err as { error_code?: string })?.error_code ||
+        (err as { message?: string })?.message ||
+        'UNKNOWN_ERROR';
+      
+      setError(getSmartError(errorCode, email));
     } finally {
       setIsLoading(false);
     }
@@ -109,14 +209,36 @@ export const UniversalLoginView: React.FC = () => {
   
   const handleOAuthClick = async (provider: OAuthProvider) => {
     setError(null);
+    setMessage(null);
     setIsLoading(true);
     
     try {
       // TODO: Call auth provider's signInWithOAuth
       console.log(`[UniversalLogin] OAuth sign in with: ${provider}`);
       // This would typically open a popup or redirect
+      
+      // DEMO: Simulate OAuth success
+      await new Promise(r => setTimeout(r, 500));
+      setMessage(`Signing in with ${OAUTH_NAMES[provider]}...`);
+      
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: string })?.code || 'UNKNOWN_ERROR';
+      setError(getSmartError(errorCode));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle resending verification email
+  const handleResendVerification = async () => {
+    setIsLoading(true);
+    try {
+      // TODO: Call auth provider's sendEmailVerification
+      console.log('[UniversalLogin] Resending verification to:', pendingEmail);
+      await new Promise(r => setTimeout(r, 1000));
+      setMessage('Verification email sent! Check your inbox.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'OAuth sign in failed');
+      setError({ message: 'Failed to resend verification email.' });
     } finally {
       setIsLoading(false);
     }
@@ -184,11 +306,71 @@ export const UniversalLoginView: React.FC = () => {
             {viewMode === 'login' && 'Welcome back'}
             {viewMode === 'signup' && 'Create your account'}
             {viewMode === 'forgot-password' && 'Reset your password'}
+            {viewMode === 'verify-email' && 'Verify your email'}
+            {viewMode === 'reset-sent' && 'Check your inbox'}
           </p>
         </div>
         
-        {/* Email/Password Form */}
-        {hasEmailPassword && (
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* VERIFY EMAIL SCREEN (The Gate from the tutorial) */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {viewMode === 'verify-email' && (
+          <div style={styles.verifyScreen}>
+            <div style={styles.verifyIcon}>📧</div>
+            <h2 style={styles.verifyTitle}>We sent you a verification email</h2>
+            <p style={styles.verifyEmail}>{pendingEmail}</p>
+            <p style={styles.verifyText}>
+              Please check your inbox and click the verification link to continue.
+            </p>
+            
+            {message && (
+              <div style={styles.messageBox}>
+                <span style={styles.messageText}>✓ {message}</span>
+              </div>
+            )}
+            
+            <button
+              onClick={handleResendVerification}
+              disabled={isLoading}
+              style={styles.secondaryButton}
+            >
+              {isLoading ? '⏳ Sending...' : 'Resend verification email'}
+            </button>
+            
+            <button
+              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
+              style={styles.link}
+            >
+              ← Back to sign in
+            </button>
+          </div>
+        )}
+        
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* PASSWORD RESET SENT SCREEN */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {viewMode === 'reset-sent' && (
+          <div style={styles.verifyScreen}>
+            <div style={styles.verifyIcon}>🔑</div>
+            <h2 style={styles.verifyTitle}>Password reset link sent!</h2>
+            <p style={styles.verifyEmail}>{pendingEmail}</p>
+            <p style={styles.verifyText}>
+              Check your inbox for a link to reset your password.
+            </p>
+            
+            <button
+              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
+              style={styles.submitButton}
+            >
+              Back to sign in
+            </button>
+          </div>
+        )}
+        
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* EMAIL/PASSWORD FORM (Login, Signup, Forgot Password) */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {hasEmailPassword && (viewMode === 'login' || viewMode === 'signup' || viewMode === 'forgot-password') && (
           <form onSubmit={handleEmailSubmit} style={styles.form}>
             
             {/* Display Name (Sign Up only) */}
@@ -236,10 +418,19 @@ export const UniversalLoginView: React.FC = () => {
               </div>
             )}
             
-            {/* Error Message */}
+            {/* Error Message with Smart Action */}
             {error && (
               <div style={styles.errorBox}>
-                <span style={styles.errorText}>⚠️ {error}</span>
+                <span style={styles.errorText}>⚠️ {error.message}</span>
+                {error.action && (
+                  <button
+                    type="button"
+                    onClick={() => { setViewMode(error.action!.viewMode); setError(null); }}
+                    style={styles.errorAction}
+                  >
+                    {error.action.label}
+                  </button>
+                )}
               </div>
             )}
             
@@ -514,6 +705,66 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#00ff88',
     fontSize: '0.75rem',
     fontWeight: 600,
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VERIFY EMAIL & RESET SENT SCREEN STYLES
+  // ═══════════════════════════════════════════════════════════════════════════
+  verifyScreen: {
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  verifyIcon: {
+    fontSize: '3rem',
+    marginBottom: '0.5rem',
+  },
+  verifyTitle: {
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    color: '#ffffff',
+    margin: 0,
+  },
+  verifyEmail: {
+    fontSize: '0.875rem',
+    color: '#00ff88',
+    fontWeight: 500,
+    margin: 0,
+    padding: '0.5rem 1rem',
+    background: 'rgba(0, 255, 136, 0.1)',
+    borderRadius: '8px',
+  },
+  verifyText: {
+    fontSize: '0.875rem',
+    color: '#94a3b8',
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  secondaryButton: {
+    width: '100%',
+    padding: '0.875rem',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: '#ffffff',
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    marginTop: '0.5rem',
+  },
+  errorAction: {
+    display: 'block',
+    marginTop: '0.5rem',
+    background: 'none',
+    border: 'none',
+    color: '#fca5a5',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    padding: 0,
   },
 };
 
