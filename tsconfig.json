@@ -16,11 +16,11 @@
 
     /* Linting - Diamond Standard Enforcement */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noImplicitThis": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,

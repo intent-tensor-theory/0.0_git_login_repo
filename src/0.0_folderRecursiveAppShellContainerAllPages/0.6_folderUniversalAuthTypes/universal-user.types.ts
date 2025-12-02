@@ -17,7 +17,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { AuthProviderType } from '../auth.config';
+import { AuthProviderType } from '../../auth.config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE UNIVERSAL USER TYPE
