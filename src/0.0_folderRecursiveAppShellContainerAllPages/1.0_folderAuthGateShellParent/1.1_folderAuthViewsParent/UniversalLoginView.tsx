@@ -20,7 +20,8 @@ import {
   MicrosoftIcon, 
   TwitterIcon, 
   DiscordIcon, 
-  LinkedInIcon 
+  LinkedInIcon,
+  EmailIcon
 } from './oauth-icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,24 +246,6 @@ export const UniversalLoginView: React.FC = () => {
   };
   
   // ─────────────────────────────────────────────────────────────────────────────
-  // CALCULATE BUBBLE POSITIONS (Circle around center)
-  // ─────────────────────────────────────────────────────────────────────────────
-  
-  const getBubblePosition = (index: number, total: number) => {
-    // Spread icons in a circle around the form
-    // Start from top (-90deg) and go clockwise
-    const angleStep = 360 / total;
-    const angle = -90 + (index * angleStep);
-    const radians = (angle * Math.PI) / 180;
-    const radius = 180; // Distance from center
-    
-    return {
-      left: `calc(50% + ${Math.cos(radians) * radius}px)`,
-      top: `calc(50% + ${Math.sin(radians) * radius}px)`,
-    };
-  };
-  
-  // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
   
@@ -271,244 +254,269 @@ export const UniversalLoginView: React.FC = () => {
       {/* Background gradient overlay */}
       <div style={styles.backgroundOverlay} />
       
-      {/* Floating OAuth Bubbles - positioned in a circle around the form */}
-      {hasOAuth && enabledOAuthProviders.map((provider, index) => {
-        const IconComponent = OAUTH_ICON_MAP[provider];
-        const position = getBubblePosition(index, enabledOAuthProviders.length);
-        
-        return (
-          <button
-            key={provider}
-            onClick={() => handleOAuthClick(provider)}
-            disabled={isLoading}
-            className="oauth-bubble"
-            style={{
-              ...styles.floatingBubble,
-              left: position.left,
-              top: position.top,
-            }}
-            title={`Continue with ${OAUTH_NAMES[provider]}`}
-            aria-label={`Continue with ${OAUTH_NAMES[provider]}`}
-          >
-            <IconComponent size={32} />
-          </button>
-        );
-      })}
-      
-      {/* Main content - centered form */}
-      <div style={styles.content}>
-        
-        {/* Logo / App Name */}
-        <div style={styles.header}>
-          <div style={styles.diamond}>◆</div>
-          <h1 style={styles.appName}>{AUTH_CONFIG.options.appName}</h1>
-          <p style={styles.subtitle}>
-            {viewMode === 'login' && 'Welcome back'}
-            {viewMode === 'signup' && 'Create your account'}
-            {viewMode === 'forgot-password' && 'Reset your password'}
-            {viewMode === 'verify-email' && 'Verify your email'}
-            {viewMode === 'reset-sent' && 'Check your inbox'}
-          </p>
-        </div>
+      {/* Main Card with Tabs */}
+      <div style={styles.card}>
         
         {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* VERIFY EMAIL SCREEN (The Gate from the tutorial) */}
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {viewMode === 'verify-email' && (
-          <div style={styles.verifyScreen}>
-            <div style={styles.verifyIcon}>📧</div>
-            <h2 style={styles.verifyTitle}>We sent you a verification email</h2>
-            <p style={styles.verifyEmail}>{pendingEmail}</p>
-            <p style={styles.verifyText}>
-              Please check your inbox and click the verification link to continue.
-            </p>
-            
-            {message && (
-              <div style={styles.messageBox}>
-                <span style={styles.messageText}>✓ {message}</span>
-              </div>
-            )}
-            
-            <button
-              onClick={handleResendVerification}
-              disabled={isLoading}
-              style={styles.secondaryButton}
-            >
-              {isLoading ? '⏳ Sending...' : 'Resend verification email'}
-            </button>
-            
-            <button
-              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
-              style={styles.link}
-            >
-              ← Back to sign in
-            </button>
-          </div>
-        )}
-        
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* PASSWORD RESET SENT SCREEN */}
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {viewMode === 'reset-sent' && (
-          <div style={styles.verifyScreen}>
-            <div style={styles.verifyIcon}>🔑</div>
-            <h2 style={styles.verifyTitle}>Password reset link sent!</h2>
-            <p style={styles.verifyEmail}>{pendingEmail}</p>
-            <p style={styles.verifyText}>
-              Check your inbox for a link to reset your password.
-            </p>
-            
-            <button
-              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
-              style={styles.submitButton}
-            >
-              Back to sign in
-            </button>
-          </div>
-        )}
-        
-        {/* ═══════════════════════════════════════════════════════════════════════ */}
-        {/* EMAIL/PASSWORD FORM (Login, Signup, Forgot Password) */}
+        {/* TOP TAB ROW — Email Methods */}
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {hasEmailPassword && (viewMode === 'login' || viewMode === 'signup' || viewMode === 'forgot-password') && (
-          <form onSubmit={handleEmailSubmit} style={styles.form}>
-            
-            {/* Display Name (Sign Up only) */}
-            {viewMode === 'signup' && (
-              <div style={styles.inputGroup}>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Display name"
-                  style={styles.input}
-                  disabled={isLoading}
-                />
-              </div>
-            )}
-            
-            {/* Email */}
-            <div style={styles.inputGroup}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                style={styles.input}
+          <div style={styles.tabRow}>
+            <button
+              style={styles.tabButton}
+              title="Sign in with Email"
+              aria-label="Sign in with Email"
+            >
+              <EmailIcon size={24} />
+            </button>
+          </div>
+        )}
+        
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* MAIN CONTENT AREA */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        <div style={styles.content}>
+        
+          {/* Logo / App Name */}
+          <div style={styles.header}>
+            <div style={styles.diamond}>◆</div>
+            <h1 style={styles.appName}>{AUTH_CONFIG.options.appName}</h1>
+            <p style={styles.subtitle}>
+              {viewMode === 'login' && 'Welcome back'}
+              {viewMode === 'signup' && 'Create your account'}
+              {viewMode === 'forgot-password' && 'Reset your password'}
+              {viewMode === 'verify-email' && 'Verify your email'}
+              {viewMode === 'reset-sent' && 'Check your inbox'}
+            </p>
+          </div>
+          
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* VERIFY EMAIL SCREEN (The Gate from the tutorial) */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {viewMode === 'verify-email' && (
+            <div style={styles.verifyScreen}>
+              <div style={styles.verifyIcon}>📧</div>
+              <h2 style={styles.verifyTitle}>We sent you a verification email</h2>
+              <p style={styles.verifyEmail}>{pendingEmail}</p>
+              <p style={styles.verifyText}>
+                Please check your inbox and click the verification link to continue.
+              </p>
+              
+              {message && (
+                <div style={styles.messageBox}>
+                  <span style={styles.messageText}>✓ {message}</span>
+                </div>
+              )}
+              
+              <button
+                onClick={handleResendVerification}
                 disabled={isLoading}
-                required
-                autoComplete="email"
-              />
+                style={styles.secondaryButton}
+              >
+                {isLoading ? '⏳ Sending...' : 'Resend verification email'}
+              </button>
+              
+              <button
+                onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
+                style={styles.link}
+              >
+                ← Back to sign in
+              </button>
             </div>
-            
-            {/* Password (not for forgot password) */}
-            {viewMode !== 'forgot-password' && (
+          )}
+          
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* PASSWORD RESET SENT SCREEN */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {viewMode === 'reset-sent' && (
+            <div style={styles.verifyScreen}>
+              <div style={styles.verifyIcon}>🔑</div>
+              <h2 style={styles.verifyTitle}>Password reset link sent!</h2>
+              <p style={styles.verifyEmail}>{pendingEmail}</p>
+              <p style={styles.verifyText}>
+                Check your inbox for a link to reset your password.
+              </p>
+              
+              <button
+                onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
+                style={styles.submitButton}
+              >
+                Back to sign in
+              </button>
+            </div>
+          )}
+          
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* EMAIL/PASSWORD FORM (Login, Signup, Forgot Password) */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {hasEmailPassword && (viewMode === 'login' || viewMode === 'signup' || viewMode === 'forgot-password') && (
+            <form onSubmit={handleEmailSubmit} style={styles.form}>
+              
+              {/* Display Name (Sign Up only) */}
+              {viewMode === 'signup' && (
+                <div style={styles.inputGroup}>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Display name"
+                    style={styles.input}
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+              
+              {/* Email */}
               <div style={styles.inputGroup}>
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
                   style={styles.input}
                   disabled={isLoading}
                   required
-                  autoComplete={viewMode === 'signup' ? 'new-password' : 'current-password'}
-                  minLength={6}
+                  autoComplete="email"
                 />
               </div>
-            )}
-            
-            {/* Error Message with Smart Action */}
-            {error && (
-              <div style={styles.errorBox}>
-                <span style={styles.errorText}>⚠️ {error.message}</span>
-                {error.action && (
+              
+              {/* Password (not for forgot password) */}
+              {viewMode !== 'forgot-password' && (
+                <div style={styles.inputGroup}>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    style={styles.input}
+                    disabled={isLoading}
+                    required
+                    autoComplete={viewMode === 'signup' ? 'new-password' : 'current-password'}
+                    minLength={6}
+                  />
+                </div>
+              )}
+              
+              {/* Error Message with Smart Action */}
+              {error && (
+                <div style={styles.errorBox}>
+                  <span style={styles.errorText}>⚠️ {error.message}</span>
+                  {error.action && (
+                    <button
+                      type="button"
+                      onClick={() => { setViewMode(error.action!.viewMode); setError(null); }}
+                      style={styles.errorAction}
+                    >
+                      {error.action.label}
+                    </button>
+                  )}
+                </div>
+              )}
+              
+              {/* Success Message */}
+              {message && (
+                <div style={styles.messageBox}>
+                  <span style={styles.messageText}>✓ {message}</span>
+                </div>
+              )}
+              
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  ...styles.submitButton,
+                  ...(isLoading ? styles.submitButtonDisabled : {}),
+                }}
+              >
+                {isLoading ? (
+                  '⏳ Please wait...'
+                ) : viewMode === 'login' ? (
+                  'Sign In'
+                ) : viewMode === 'signup' ? (
+                  'Create Account'
+                ) : (
+                  'Send Reset Link'
+                )}
+              </button>
+            </form>
+          )}
+          
+          {/* OAuth-only hint if no email/password */}
+          {!hasEmailPassword && hasOAuth && (viewMode === 'login' || viewMode === 'signup') && (
+            <p style={styles.oauthHint}>
+              Choose a sign-in method below
+            </p>
+          )}
+          
+          {/* Navigation Links */}
+          <div style={styles.links}>
+            {viewMode === 'login' && (
+              <>
+                {hasEmailPassword && (
                   <button
-                    type="button"
-                    onClick={() => { setViewMode(error.action!.viewMode); setError(null); }}
-                    style={styles.errorAction}
+                    onClick={() => { setViewMode('forgot-password'); setError(null); setMessage(null); }}
+                    style={styles.link}
                   >
-                    {error.action.label}
+                    Forgot password?
                   </button>
                 )}
-              </div>
+                {allowSignUp && (
+                  <button
+                    onClick={() => { setViewMode('signup'); setError(null); setMessage(null); }}
+                    style={styles.link}
+                  >
+                    Create account
+                  </button>
+                )}
+              </>
             )}
             
-            {/* Success Message */}
-            {message && (
-              <div style={styles.messageBox}>
-                <span style={styles.messageText}>✓ {message}</span>
-              </div>
-            )}
-            
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                ...styles.submitButton,
-                ...(isLoading ? styles.submitButtonDisabled : {}),
-              }}
-            >
-              {isLoading ? (
-                '⏳ Please wait...'
-              ) : viewMode === 'login' ? (
-                'Sign In'
-              ) : viewMode === 'signup' ? (
-                'Create Account'
-              ) : (
-                'Send Reset Link'
-              )}
-            </button>
-          </form>
-        )}
-        
-        {/* OAuth hint if no email/password */}
-        {!hasEmailPassword && hasOAuth && (
-          <p style={styles.oauthHint}>
-            Click any icon around the screen to sign in
-          </p>
-        )}
-        
-        {/* Navigation Links */}
-        <div style={styles.links}>
-          {viewMode === 'login' && (
-            <>
+            {viewMode === 'signup' && (
               <button
-                onClick={() => { setViewMode('forgot-password'); setError(null); setMessage(null); }}
+                onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
                 style={styles.link}
               >
-                Forgot password?
+                Already have an account? Sign in
               </button>
-              {allowSignUp && (
-                <button
-                  onClick={() => { setViewMode('signup'); setError(null); setMessage(null); }}
-                  style={styles.link}
-                >
-                  Create account
-                </button>
-              )}
-            </>
-          )}
+            )}
+            
+            {viewMode === 'forgot-password' && (
+              <button
+                onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
+                style={styles.link}
+              >
+                ← Back to sign in
+              </button>
+            )}
+          </div>
           
-          {viewMode === 'signup' && (
-            <button
-              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
-              style={styles.link}
-            >
-              Already have an account? Sign in
-            </button>
-          )}
-          
-          {viewMode === 'forgot-password' && (
-            <button
-              onClick={() => { setViewMode('login'); setError(null); setMessage(null); }}
-              style={styles.link}
-            >
-              ← Back to sign in
-            </button>
-          )}
         </div>
+        
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* BOTTOM TAB ROW — Social OAuth Methods */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {hasOAuth && (viewMode === 'login' || viewMode === 'signup') && (
+          <div style={styles.tabRow}>
+            {enabledOAuthProviders.map((provider) => {
+              const IconComponent = OAUTH_ICON_MAP[provider];
+              return (
+                <button
+                  key={provider}
+                  onClick={() => handleOAuthClick(provider)}
+                  disabled={isLoading}
+                  style={styles.tabButton}
+                  className="oauth-tab"
+                  title={`Continue with ${OAUTH_NAMES[provider]}`}
+                  aria-label={`Continue with ${OAUTH_NAMES[provider]}`}
+                >
+                  <IconComponent size={24} />
+                </button>
+              );
+            })}
+          </div>
+        )}
+        
       </div>
       
       {/* Diamond Standard Badge */}
@@ -516,19 +524,17 @@ export const UniversalLoginView: React.FC = () => {
         <span style={styles.badgeText}>◆ Diamond Standard</span>
       </div>
       
-      {/* CSS for hover animations - injected via style tag */}
+      {/* CSS for hover animations */}
       <style>{`
-        .oauth-bubble {
-          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                      box-shadow 0.3s ease,
-                      opacity 0.3s ease;
+        .oauth-tab {
+          transition: transform 0.2s ease, background 0.2s ease;
         }
-        .oauth-bubble:hover {
-          transform: translate(-50%, -50%) scale(1.3) !important;
-          box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        .oauth-tab:hover {
+          transform: scale(1.15) translateY(-2px);
+          background: rgba(255, 255, 255, 0.15) !important;
         }
-        .oauth-bubble:active {
-          transform: translate(-50%, -50%) scale(1.1) !important;
+        .oauth-tab:active {
+          transform: scale(1.05);
         }
         input:focus {
           border-color: #00ff88 !important;
@@ -563,32 +569,42 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'radial-gradient(circle at 30% 20%, rgba(0, 255, 136, 0.05) 0%, transparent 50%)',
     pointerEvents: 'none',
   },
-  floatingBubble: {
-    position: 'absolute',
-    width: '64px',
-    height: '64px',
-    borderRadius: '50%',
+  card: {
+    width: '100%',
+    maxWidth: '400px',
+    position: 'relative',
+    zIndex: 1,
+    background: 'rgba(10, 10, 26, 0.9)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  tabRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '1rem',
+    background: 'rgba(255, 255, 255, 0.03)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+    flexWrap: 'wrap',
+  },
+  tabButton: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
     border: 'none',
-    background: 'transparent',  // No background - just the icon
+    background: 'rgba(255, 255, 255, 0.05)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transform: 'translate(-50%, -50%)',  // Center on position
-    zIndex: 10,
-    opacity: 0.8,
     padding: 0,
+    color: '#ffffff',
   },
   content: {
-    width: '100%',
-    maxWidth: '360px',
     padding: '2rem',
-    position: 'relative',
-    zIndex: 1,
-    background: 'rgba(10, 10, 26, 0.8)',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
   },
   header: {
     textAlign: 'center',

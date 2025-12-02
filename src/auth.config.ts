@@ -185,12 +185,12 @@ export const AUTH_CONFIG: AuthConfig = {
   methods: {
     emailPassword: true,   // The email/password form
     google: true,          // Google OAuth
-    github: false,         // GitHub OAuth
-    apple: false,          // Apple Sign-In
-    microsoft: false,      // Microsoft OAuth
-    twitter: false,        // Twitter/X OAuth
-    discord: false,        // Discord OAuth
-    linkedin: false,       // LinkedIn OAuth
+    github: true,          // GitHub OAuth
+    apple: true,           // Apple Sign-In
+    microsoft: true,       // Microsoft OAuth
+    twitter: true,         // Twitter/X OAuth
+    discord: true,         // Discord OAuth
+    linkedin: true,        // LinkedIn OAuth
   },
   
   // ═══════════════════════════════════════════════════════════════════════════
